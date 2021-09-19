@@ -1,0 +1,1 @@
+["^ ","~$queue",["^ ","~:row",4,"~:col",1,"~:fixed-arities",["~#set",[0]],"~:name","^0","~:ns","~$event-driven-compiler.event-engine","~:top-ns","^7","~:arities",["^ ","~i0",["^ ","~:ret","~:nil"]]],"~:filename","D:\\poli\\compiladores\\event-driven-compiler\\src\\event_driven_compiler\\event_queue.clj"]
