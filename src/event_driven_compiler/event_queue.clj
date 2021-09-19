@@ -19,9 +19,9 @@
    (dosync
     (alter queue
            (fn [state]
-             (conj @queue item)))))
+             (conj state item)))))
   ([item & others]
    (dosync
     (alter queue
            (fn [state]
-             (into (conj @queue item) others))))))
+             (into (conj state item) others))))))
