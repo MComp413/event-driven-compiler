@@ -1,10 +1,9 @@
-(ns event-driven-compiler.core)
-
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(ns event-driven-compiler.core
+  (:require [event-driven-compiler.event-queue :as q])
+  (:require [event-driven-compiler.event-engine :as ngn]))
 
 (defn -main
-  []
-  (println "helloworld!"))
+  [filename]
+  (let [file-data (slurp filename)]
+    (q/push-event (ngn/new-event :start 0 {:file-data file-data}))
+    (ngn/run-engine)))
