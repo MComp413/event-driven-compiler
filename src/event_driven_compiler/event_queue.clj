@@ -1,27 +1,42 @@
 (ns event-driven-compiler.event-queue (:gen-class))
 
-(def queue (ref []))
+(defn build-pop
+  [queue-ref]
+  (fn []
+    (if (empty? @queue-ref)
+      nil
+      (dosync
+       (alter queue-ref (fn [state]
+                          (subvec state 1)))))))
 
-(defn peek-event []
-  (if (empty? @queue)
-    nil
-    (queue 0)))
+(defn build-peek
+  [queue-ref]
+  (fn []
+    (if (empty? @queue-ref)
+      nil
+      (queue-ref 0))))
 
-(defn pop-event []
-  (if (empty? @queue)
-    nil
-    (dosync
-     (alter queue (fn [state]
-                    (subvec state 1))))))
+(defn build-push
+  [queue-ref]
+  (fn
+    ([item]
+     (dosync
+      (alter queue-ref
+             (fn [state]
+               (conj state item)))))
+    ([item & others]
+     (dosync
+      (alter queue-ref
+             (fn [state]
+               (into (conj state item) others)))))))
 
-(defn push-event
-  ([item]
-   (dosync
-    (alter queue
-           (fn [state]
-             (conj state item)))))
-  ([item & others]
-   (dosync
-    (alter queue
-           (fn [state]
-             (into (conj state item) others))))))
+(defn build-queue
+  []
+  (let [new-queue (ref [])
+        pop (build-pop new-queue)
+        peek (build-peek new-queue)
+        push (build-push new-queue)]
+    {:ref new-queue
+     :pop pop
+     :peek peek
+     :push push}))

@@ -1,9 +1,10 @@
 (ns event-driven-compiler.core
-  (:require [event-driven-compiler.event-queue :as q])
-  (:require [event-driven-compiler.event-engine :as ngn]))
+  (:require [event-driven-compiler.event-engine :as ngn])
+  (:require [event-driven-compiler.test-engine :as test-ngn]))
 
 (defn -main
   [filename]
   (let [file-data (slurp filename)]
-    (q/push-event (ngn/new-event :start 0 {:file-data file-data}))
-    (ngn/run-engine)))
+    (((test-ngn/test-engine :queue) :push) (ngn/new-event :start 0 file-data))
+    (println ((test-ngn/test-engine :queue) :ref))
+    ((test-ngn/test-engine :run))))
