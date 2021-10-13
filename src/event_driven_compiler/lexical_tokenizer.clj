@@ -4,15 +4,46 @@
             [event-driven-compiler.stack-automata :as stk-atm]
             [clojure.string :as string]))
 
-; Estado do motor léxico
-(def lexical-queue (q/build-queue))
-(def token-builder (ref {:string "" :type :empty}))
+; Definição de tokens e símbolos/palavras da linguagem
+(def token-types #{:reserved
+                   :identifier
+                   :integer
+                   :operator
+                   :symbol})
 
-; Definições auxiliares
-(def blank-characters-regex #"[\s]")
+(defrecord Token [type content])
+(defn new-token [type content] (Token. type content))
+
+(def blank-characters-regex #"[\s\n]")
 (defn is-whitespace-char?
   [character]
   (not-empty (re-seq blank-characters-regex (str character))))
+
+(def special-characters-regex #"[;:+\-*/(),>=<]")
+(defn is-special-char?
+  [character]
+  (not-empty (re-seq special-characters-regex (str character))))
+
+(def single-char-operator-set #{"+" "-" "*" "/" "(" ")" ">" "<" "," ";"})
+(def ambiguous-char-operator-set #{":" "="})
+(def multi-char-operator-set #{":="})
+
+(defn is-single-char-operator?
+  [token-content]
+  (contains? single-char-operator-set token-content))
+
+(defn is-ambiguous-char-operator?
+  [token-content]
+  (contains? ambiguous-char-operator-set token-content))
+
+(defn is-multi-char-operator?
+  [token-content]
+  (contains? multi-char-operator-set token-content))
+
+(def reserved-word-set #{"END" "LET" "GOTO" "GO" "TO" "OF" "READ" "PRINT" "IF" "THEN" "ELSE"})
+(defn is-reserved-word?
+  [token-content]
+  (contains? reserved-word-set token-content))
 
 (def word-character-regex #"[A-Za-z]")
 (defn is-word-char?
@@ -25,24 +56,21 @@
   (not-empty (re-seq digit-character-regex (str character))))
 
 
+; Estado do motor léxico
+(def lexical-queue (q/build-queue))
+(def token-builder (ref {:string "" :type :empty}))
+
+
+; Definições auxiliares
 (defn get-char-category [character]
   (cond (is-word-char? character) :word-char
         (is-digit-char? character) :digit-char
         (is-whitespace-char? character) :whitespace
         :else :special-char))
 
-;; (def ingest-char
-;;   []
-;;   (dosync
-;;    (alter token-builder
-;;           (fn [token]
-;;             (if (should-append-char-to-token? character, character-type, token)
-;;               (str token character)
-;;               (do
-;;                 ()))))))
-
 
 ; Autômato de tokens léxicos
+; token-builder-states #{:empty :word :number :special}
 (def token-builder-transitions
   {:empty (fn [stack event]
             (let [next-char (-> event :data)
@@ -86,16 +114,25 @@
                (stk-atm/new-automaton-state :empty
                                             ""
                                             token-builder-transitions
-                                            [(ngn/new-event :word-token
+                                            [(ngn/new-event :token
                                                             (+ 1 (-> event :timestamp))
-                                                            stack)])
+                                                            (new-token
+                                                             (if
+                                                              (is-reserved-word? stack)
+                                                               :reserved
+                                                               :identifer)
+                                                             stack))])
                :special-char
                (stk-atm/new-automaton-state :special
                                             (str next-char)
                                             token-builder-transitions
-                                            [(ngn/new-event :word-token
+                                            [(ngn/new-event :token
                                                             (+ 1 (-> event :timestamp))
-                                                            stack)])
+                                                            (new-token
+                                                             (if (is-reserved-word? stack)
+                                                               :reserved
+                                                               :identifer)
+                                                             stack))])
                (stk-atm/new-automaton-state :error
                                             stack
                                             token-builder-transitions
@@ -118,16 +155,16 @@
                  (stk-atm/new-automaton-state :special
                                               (str next-char)
                                               token-builder-transitions
-                                              [(ngn/new-event :number-token
+                                              [(ngn/new-event :token
                                                               (+ 1 (-> event :timestamp))
-                                                              stack)])
+                                                              (new-token :integer stack))])
                  :whitespace
                  (stk-atm/new-automaton-state :empty
                                               (str next-char)
                                               ""
-                                              [(ngn/new-event :number-token
+                                              [(ngn/new-event :token
                                                               (+ 1 (-> event :timestamp))
-                                                              stack)])
+                                                              (new-token :integer stack))])
                  (stk-atm/new-automaton-state :error
                                               stack
                                               token-builder-transitions
@@ -140,28 +177,48 @@
                   (stk-atm/new-automaton-state :word
                                                (str next-char)
                                                token-builder-transitions
-                                               [(ngn/new-event :special-token
+                                               [(ngn/new-event :token
                                                                (+ 1 (-> event :timestamp))
-                                                               stack)])
+                                                               (new-token :operator stack))])
                   :digit-char
                   (stk-atm/new-automaton-state :number
                                                (str next-char)
                                                token-builder-transitions
-                                               [(ngn/new-event :special-token
+                                               [(ngn/new-event :token
                                                                (+ 1 (-> event :timestamp))
-                                                               stack)])
+                                                               (new-token :operator stack))])
                   :special-char
-                  (stk-atm/new-automaton-state :special
-                                               (str stack next-char)
-                                               token-builder-transitions
-                                               [])
+                  (cond
+                    (is-single-char-operator? stack)
+                    (stk-atm/new-automaton-state :special
+                                                 (str next-char)
+                                                 token-builder-transitions
+                                                 [(ngn/new-event :token
+                                                                 (+ 1 (-> event :timestamp))
+                                                                 (new-token :operator stack))])
+
+                    (is-multi-char-operator? (str stack next-char))
+                    (stk-atm/new-automaton-state :empty
+                                                 ""
+                                                 token-builder-transitions
+                                                 [(ngn/new-event :token
+                                                                 (+ 1 (-> event :timestamp))
+                                                                 (new-token
+                                                                  :operator
+                                                                  (str stack next-char)))])
+
+                    (is-ambiguous-char-operator? stack)
+                    (stk-atm/new-automaton-state :special
+                                                 (str stack next-char)
+                                                 token-builder-transitions
+                                                 []))
                   :whitespace
                   (stk-atm/new-automaton-state :empty
                                                ""
                                                token-builder-transitions
-                                               [(ngn/new-event :special-token
+                                               [(ngn/new-event :token
                                                                (+ 1 (-> event :timestamp))
-                                                               stack)]))))})
+                                                               (new-token :operator stack))]))))})
 
 (defn get-next-token-builder-state
   [state-type stack event]
@@ -205,9 +262,8 @@
                   (apply
                    (lexical-queue :push)
                    events-to-push)))
-   :word-token (fn [event])
-   :number-token (fn [event])
-   :special-token (fn [event])})
+   :token (fn [event]
+            (println (str (-> event :data))))})
 
 (defn lexical-event-handler-selector
   [event]
