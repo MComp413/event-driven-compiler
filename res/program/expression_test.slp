@@ -1,0 +1,2 @@
+(PRINT "bom dia" 35 var)
+(READ "boa noite")

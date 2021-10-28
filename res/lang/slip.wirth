@@ -1,7 +1,7 @@
 <syntax>
   program = expression { expression } .
-  expression = [ label ] ( atom | list ) .
-  list = "(" expression ")" .
+  expression = atom | list .
+  list = "(" { expression } ")" .
   atom = number | name | string .
 
   number = digit { digit } .
@@ -22,13 +22,15 @@
                 | "=" | "{" | "}" | "[" | "]" | "<"
                 | ">" | "," | "." | "/" | "?" | ":"
                 | ";" | "|" | "\" | "‘" | "’" .
+  
+  comment = ; { ascii } EOL .
 </syntax>
 
 <lexicon>
   operator = "+" | "-" | "*" | "/" 
                  | "&&" | "||" | "!" | "=" 
                  | "!=" | ">" | "<" | ">=" 
-                 | "<=" .
+                 | "<=" | "(" | ")" .
              
   reserved = "DO" | "DEF" | "PARAMS" | "SET" | "IF"
                   | "IFELSE" | "LOOP" | "RECUR" | "BREAK"

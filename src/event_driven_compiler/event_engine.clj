@@ -13,7 +13,6 @@
           (loop [continue? true]
             (cond continue?
                   (let [next-event ((queue :peek))]
-                    (println (str name " - tamanho da fila: " (count @(queue :ref))))
                     ((event-handler-selector next-event) next-event)
                     ((queue :pop))
                     (recur (not-empty @(queue :ref)))))))})

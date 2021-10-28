@@ -19,6 +19,7 @@
 (defn build-push
   [queue-ref]
   (fn
+    ([] queue-ref)
     ([item]
      (dosync
       (alter queue-ref
