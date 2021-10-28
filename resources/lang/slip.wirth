@@ -1,0 +1,37 @@
+<syntax>
+  program = expression { expression } .
+  expression = [ label ] ( atom | list ) .
+  list = "(" expression ")" .
+  atom = number | name | string .
+
+  number = digit { digit } .
+  name = letter { letter | digit } .
+  string = """ { ascii } """ .
+
+  digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+
+  letter = "A" | "B" | "C" | "D" | "E" | "F"
+               | "G" | "H" | "I" | "J" | "K" | "L"
+               | "M" | "N" | "O" | "P" | "Q" | "R"
+               | "S" | "T" | "U" | "V" | "W" | "X"
+               | "Y" | "Z" .
+
+  ascii = digit | letter
+                | "!" | "@" | "#" | "$" | "^" | "&"
+                | "*" | "(" | ")" | "-" | "_" | "+"
+                | "=" | "{" | "}" | "[" | "]" | "<"
+                | ">" | "," | "." | "/" | "?" | ":"
+                | ";" | "|" | "\" | "‘" | "’" .
+</syntax>
+
+<lexicon>
+  operator = "+" | "-" | "*" | "/" 
+                 | "&&" | "||" | "!" | "=" 
+                 | "!=" | ">" | "<" | ">=" 
+                 | "<=" .
+             
+  reserved = "DO" | "DEF" | "PARAMS" | "SET" | "IF"
+                  | "IFELSE" | "LOOP" | "RECUR" | "BREAK"
+                  | "PRINT" | "READ" | "VECTOR" | "VECSET"
+                  | "GOTO" | "IFGOTO" | "FOR" | "WHILE" | "#" .
+</lexicon>

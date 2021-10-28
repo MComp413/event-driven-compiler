@@ -1,0 +1,98 @@
+;; aritmetica basica
+
+(SET x 6)
+(SET y 2)
+(SET z (+ x y))
+(PRINT z)
+(SET z (* x y))
+(PRINT z)
+(SET z (- x y))
+(PRINT z)
+(SET z (/ x y))
+(PRINT z)
+
+;; leitura de input
+
+(SET x (READ "Digite um número"))
+(SET y (READ "Digite outro número"))
+(SET z (+ x y))
+(PRINT "x + y = " z)
+
+;; declaração de vetor
+
+(VECTOR vec 1 2 3 4)
+
+;; loop e recursão
+
+(SET vecsize 4)
+(SET sum ((LOOP (PARAMS acc index)
+                (IFELSE (>= index vecsize)
+                        (BREAK acc)
+                        (RECUR
+                         (+ acc (GET vec index))
+                         (+ index 1))
+                         ))
+          0
+          0))
+
+(PRINT sum)
+
+;; for e while com leitura e escrita em vetor
+
+(FOR i 0 1 50
+  (PRINT i))
+
+(VECTOR vec2 1 2 3 4 5)
+
+(PRINT "vec2 inicial")
+
+(FOR i 0 1 5
+  (PRINT (GET vec i)))
+
+(SET i 0)
+(WHILE (<= i 5)
+  (SETVEC vec2 i (+ 10 (GET vec2 i))))
+
+(PRINT "vec2 + 10")
+
+(FOR i 0 1 5
+  (PRINT (GET vec i)))
+
+;; definição e chamada de funções
+
+(DEF dobro (PARAMS arg1)
+  (* arg1 2))
+
+(DEF metade (PARAMS arg1)
+  (/ arg1 2))
+
+(DEF dobro_da_metade (PARAMS arg1)
+  (dobro (metade arg1)))
+
+(SET num (READ "Digite um numero par:"))
+(PRINT "dobro:" )
+(PRINT (dobro num))
+
+(PRINT "metade:" )
+(PRINT (metade num))
+
+;; blocos com DO, label e GOTO
+
+(DO)
+
+(GOTO skip)
+
+(PRINT "Será pulado")
+
+(#skip (PRINT "Pulou"))
+
+(SET x 0)
+(# loop (IFGOTO (>= x 5) #exit))
+(PRINT x)
+(SET x (+ x 1))
+(GOTO)
+
+(# exit (PRINT "Fim"))
+
+
+
