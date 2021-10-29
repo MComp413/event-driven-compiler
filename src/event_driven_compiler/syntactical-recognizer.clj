@@ -12,7 +12,16 @@
 ; Estado do motor sintático
 (def syntactical-queue (q/build-queue))
 
-; Autômatos de estruturas sintáticas
-
-
 ; Gerenciadores de evento sintático
+(def syntactical-event-handlers
+  {:token (fn [event] nil)})
+
+(defn syntactical-queue-handler-selector
+  [event]
+  (println event)
+  (syntactical-event-handlers (-> event :type)))
+
+(def syntactical-engine (ngn/build-engine
+                         syntactical-queue
+                         syntactical-queue-handler-selector
+                         "syntactical-engine"))
