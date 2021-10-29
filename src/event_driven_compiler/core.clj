@@ -1,7 +1,7 @@
 (ns event-driven-compiler.core (:gen-class)
     (:require [event-driven-compiler.event-engine :as ngn]
-              [event-driven-compiler.test-engine :as test-ngn]
-              [event-driven-compiler.lexical-tokenizer :as lx-ngn]))
+              [event-driven-compiler.lexical-tokenizer :as lx-ngn]
+              [clojure.data.json :as json]))
 
 (defn is-lexical-state-successful
   []
@@ -11,16 +11,13 @@
     (and (empty? stack) (not= state :error) (empty? event-queue))))
 
 (defn -main
-  [filename]
+  [filename output-filename]
   (((lx-ngn/lexical-engine :queue) :push) (ngn/new-event :start 0 filename))
+  (spit (str "res/lexical_tokens/" output-filename) "")
   ((lx-ngn/lexical-engine :run))
+  (spit (str "res/lexical_tokens/" output-filename)
+        (json/write-str @lx-ngn/output-tokens)
+        :append true)
   (println (str "remaning stack: " (-> @lx-ngn/token-builder-automata :stack)))
   (println (str "remaining events: " @((lx-ngn/lexical-engine :queue) :ref)))
   (println (str "Arquivo lexicamente aceito: " (is-lexical-state-successful))))
-
-(defn test-main
-  [filename]
-  (let [file-data (slurp filename :encoding "UTF-8")]
-    (((test-ngn/test-engine :queue) :push) (ngn/new-event :start 0 file-data))
-    (println @((test-ngn/test-engine :queue) :ref))
-    ((test-ngn/test-engine :run))))

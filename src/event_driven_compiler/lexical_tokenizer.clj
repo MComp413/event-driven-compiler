@@ -1,8 +1,7 @@
 (ns event-driven-compiler.lexical-tokenizer (:gen-class)
     (:require [event-driven-compiler.event-engine :as ngn]
               [event-driven-compiler.event-queue :as q]
-              [event-driven-compiler.stack-automata :as stk-atm]
-              [clojure.string :as string]))
+              [event-driven-compiler.stack-automata :as stk-atm]))
 
 ; Definição de tokens e símbolos/palavras da linguagem
 (def token-types #{:reserved
@@ -15,6 +14,10 @@
 (defrecord Token [type content])
 (defn new-token [type content] (Token. type content))
 
+; Estrutura de dados para output do aoutômato
+(def output-tokens (ref []))
+
+; Definições auxiliares
 (def blank-characters-regex #"[\s\n\r\t,]")
 (defn is-whitespace-char?
   [character]
@@ -58,17 +61,14 @@
   [character]
   (not-empty (re-seq digit-character-regex (str character))))
 
-
-; Estado do motor léxico
-(def lexical-queue (q/build-queue))
-
-
-; Definições auxiliares
 (defn get-char-category [character]
   (cond (is-word-char? character) :word-char
         (is-digit-char? character) :digit-char
         (is-whitespace-char? character) :whitespace
         :else :special-char))
+
+; Estado do motor léxico
+(def lexical-queue (q/build-queue))
 
 
 ; Autômato de tokens léxicos
@@ -298,7 +298,7 @@
                    (lexical-queue :push)
                    events-to-push)))
    :token (fn [event]
-            (println (str (-> event :data))))})
+            (dosync (alter output-tokens (fn [state] (conj state (into {} (-> event :data)))))))})
 
 (defn lexical-event-handler-selector
   [event]
