@@ -2,12 +2,16 @@
   program = expression { expression } .
   expression = atom | list .
   list = "(" { expression } ")" .
-  atom = number | name | string .
+  atom = number | name | string | operator .
 
   number = digit { digit } .
   name = letter { letter | digit } .
   string = """ { ascii } """ .
+  
+  comment = ; { ascii } EOL .
+</syntax>
 
+<lexicon>
   digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
 
   letter = "A" | "B" | "C" | "D" | "E" | "F"
@@ -22,15 +26,11 @@
                 | "=" | "{" | "}" | "[" | "]" | "<"
                 | ">" | "," | "." | "/" | "?" | ":"
                 | ";" | "|" | "\" | "‘" | "’" .
-  
-  comment = ; { ascii } EOL .
-</syntax>
 
-<lexicon>
   operator = "+" | "-" | "*" | "/" 
                  | "&&" | "||" | "!" | "=" 
                  | "!=" | ">" | "<" | ">=" 
-                 | "<=" | "(" | ")" .
+                 | "<=" .
              
   reserved = "DO" | "DEF" | "PARAMS" | "SET" | "IF"
                   | "IFELSE" | "LOOP" | "RECUR" | "BREAK"
