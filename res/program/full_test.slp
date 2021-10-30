@@ -66,7 +66,7 @@
 (DEF metade (PARAMS arg1)
   (/ arg1 2))
 
-(DEF dobro_da_metade (PARAMS arg1)
+(DEF dobrodametade (PARAMS arg1)
   (dobro (metade arg1)))
 
 (SET num (READ "Digite um numero par:"))
@@ -84,10 +84,10 @@
 
 (PRINT "Será pulado")
 
-(#skip (PRINT "Pulou"))
+(# skip (PRINT "Pulou"))
 
 (SET x 0)
-(# loop (IFGOTO (>= x 5) #exit))
+(# loop (IFGOTO (>= x 5) exit))
 (PRINT x)
 (SET x (+ x 1))
 (GOTO)

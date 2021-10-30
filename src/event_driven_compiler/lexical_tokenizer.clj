@@ -1,7 +1,8 @@
-(ns event-driven-compiler.lexical-tokenizer (:gen-class)
-    (:require [event-driven-compiler.event-engine :as ngn]
-              [event-driven-compiler.event-queue :as q]
-              [event-driven-compiler.stack-automata :as stk-atm]))
+(ns event-driven-compiler.lexical-tokenizer
+  (:gen-class)
+  (:require [event-driven-compiler.event-engine :as ngn]
+            [event-driven-compiler.event-queue :as q]
+            [event-driven-compiler.stack-automata :as stk-atm]))
 
 ; Definição de tokens e símbolos/palavras da linguagem
 (def token-types #{:reserved
@@ -98,7 +99,7 @@
                                                "\"" :string
                                                ";" :comment
                                                :special)
-                                             (str  stack next-char)
+                                             (str stack next-char)
                                              token-builder-transitions
                                              [])
                 :symbol
@@ -132,7 +133,7 @@
                                                             (new-token
                                                              (if (is-reserved-word? stack)
                                                                :reserved
-                                                               :identifer)
+                                                               :identifier)
                                                              stack))])
                :special-char
                (stk-atm/new-automaton-state (case (str next-char)
@@ -146,7 +147,7 @@
                                                             (new-token
                                                              (if (is-reserved-word? stack)
                                                                :reserved
-                                                               :identifer)
+                                                               :identifier)
                                                              stack))])
                :symbol
                (stk-atm/new-automaton-state :empty
@@ -157,7 +158,7 @@
                                                             (new-token
                                                              (if (is-reserved-word? stack)
                                                                :reserved
-                                                               :identifer)
+                                                               :identifier)
                                                              stack))
                                              (ngn/new-event :token
                                                             (+ 1 (-> event :timestamp))
@@ -235,6 +236,12 @@
                                                                (new-token :operator stack))])
                   :special-char
                   (cond
+                    (is-ambiguous-char-operator? stack)
+                    (stk-atm/new-automaton-state :special
+                                                 (str stack next-char)
+                                                 token-builder-transitions
+                                                 [])
+
                     (is-single-char-operator? stack)
                     (stk-atm/new-automaton-state (case (str next-char)
                                                    "\"" :string
@@ -254,13 +261,7 @@
                                                                  (+ 1 (-> event :timestamp))
                                                                  (new-token
                                                                   :operator
-                                                                  (str stack next-char)))])
-
-                    (is-ambiguous-char-operator? stack)
-                    (stk-atm/new-automaton-state :special
-                                                 (str stack next-char)
-                                                 token-builder-transitions
-                                                 []))
+                                                                  (str stack next-char)))]))
                   :whitespace
                   (stk-atm/new-automaton-state :empty
                                                ""

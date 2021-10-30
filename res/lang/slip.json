@@ -3,7 +3,7 @@
     "program": "expression { expression } .",
     "expression": "atom | list .",
     "list": "\"(\" { expression } \")\" .",
-    "atom": "number | name | string .",
+    "atom": "number | name | string | operator .",
     
     "number": "digit { digit } .",
     "name": "letter { letter | digit } .",

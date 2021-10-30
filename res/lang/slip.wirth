@@ -2,11 +2,12 @@
   program = expression { expression } .
   expression = atom | list .
   list = "(" { expression } ")" .
-  atom = number | name | string | operator .
+  atom = number | identifer | string | operator .
 
   number = digit { digit } .
-  name = letter { letter | digit } .
+  identifier = name | reserved .
   string = """ { ascii } """ .
+  name = letter { letter | digit } .
   
   comment = ; { ascii } EOL .
 </syntax>

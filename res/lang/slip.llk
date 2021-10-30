@@ -1,0 +1,140 @@
+<syntax>
+  Program -> Expression RestProgram
+  RestProgram -> Expression RestProgram
+  RestProgram -> Empty
+
+  Expression -> Atom
+  Expression -> List
+
+  Atom -> String
+  Atom -> Integer
+  Atom -> Identifier
+
+  List -> ( ListHead RestList
+  
+  ListHead -> Reserved
+  ListHead -> Operator
+  ListHead -> Identifier
+
+  RestList -> Expression RestList
+  RestList -> )
+
+  Comment -> ; RestComment
+  RestComment -> Ascii RestComment
+  RestComment -> EOL
+</syntax>
+
+<lexicon>
+  Integer -> Digit RestInteger
+  RestInteger -> Digit RestInteger
+  RestInteger -> Empty
+
+  Identifier -> Letter RestIdentifier
+  RestIdentifier -> Digit RestIdentifier
+  RestIdentifier -> Letter RestIdentifier
+  RestIdentifier -> Empty
+
+  Digit -> 0
+  Digit -> 1
+  Digit -> 2
+  Digit -> 3
+  Digit -> 4
+  Digit -> 5
+  Digit -> 6
+  Digit -> 7
+  Digit -> 8
+  Digit -> 9
+
+  Letter -> A
+  Letter -> B
+  Letter -> C
+  Letter -> D
+  Letter -> E
+  Letter -> F
+  Letter -> G
+  Letter -> H
+  Letter -> I
+  Letter -> J
+  Letter -> K
+  Letter -> L
+  Letter -> M
+  Letter -> N
+  Letter -> O
+  Letter -> P
+  Letter -> Q
+  Letter -> R
+  Letter -> S
+  Letter -> T
+  Letter -> U
+  Letter -> V
+  Letter -> W
+  Letter -> X
+  Letter -> Y
+  Letter -> Z
+
+  Ascii -> Digit
+  Ascii -> Letter
+  Ascii -> !
+  Ascii -> @
+  Ascii -> #
+  Ascii -> $
+  Ascii -> ^
+  Ascii -> &
+  Ascii -> *
+  Ascii -> (
+  Ascii -> )
+  Ascii -> -
+  Ascii -> _
+  Ascii -> +
+  Ascii -> =
+  Ascii -> {
+  Ascii -> }
+  Ascii -> [
+  Ascii -> ]
+  Ascii -> <
+  Ascii -> >
+  Ascii -> ,
+  Ascii -> .
+  Ascii -> /
+  Ascii -> ?
+  Ascii -> :
+  Ascii -> ;
+  Ascii -> |
+  Ascii -> \
+  Ascii -> ‘
+  Ascii -> ’
+
+  Operator -> +
+  Operator -> -
+  Operator -> *
+  Operator -> /
+  Operator -> &&
+  Operator -> ||
+  Operator -> !
+  Operator -> =
+  Operator -> !=
+  Operator -> >
+  Operator -> <
+  Operator -> >=
+  Operator -> <=
+             
+  Reserved -> DO
+  Reserved -> DEF
+  Reserved -> PARAMS
+  Reserved -> SET
+  Reserved -> IF
+  Reserved -> IFELSE
+  Reserved -> LOOP
+  Reserved -> RECUR
+  Reserved -> BREAK
+  Reserved -> PRINT
+  Reserved -> READ
+  Reserved -> VECTOR
+  Reserved -> VECSET
+  Reserved -> GOTO
+  Reserved -> IFGOTO
+  Reserved -> FOR
+  Reserved -> WHILE
+  Reserved -> #
+
+</lexicon>
