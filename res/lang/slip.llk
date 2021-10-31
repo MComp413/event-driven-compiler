@@ -5,23 +5,103 @@
 
   Expression -> Atom
   Expression -> List
+  
+  List -> ( KeywordCall
+  List -> ( Arithmetic
+  List -> ( Comparison
+  List -> ( Logical
+  List -> ( HeadList RestList
+
+  KeywordCall -> If
+  KeywordCall -> IfElse
+  KeywordCall -> DoList
+  KeywordCall -> For
+  KeywordCall -> While
+  KeywordCall -> Def
+  KeywordCall -> Set
+  KeywordCall -> Vector
+  KeywordCall -> VecGet
+  KeywordCall -> VecSet
+  KeywordCall -> Label
+  KeywordCall -> GoTo
+  KeywordCall -> IfGoTo
+  KeywordCall -> Print
+  KeywordCall -> Read
+
+  Arithmetic -> Add
+  Arithmetic -> Subtract
+  Arithmetic -> Multiply
+  Arithmetic -> Divide
+  
+  Comparison -> Equals
+  Comparison -> NotEqual
+  Comparison -> Not
+  Comparison -> Greater
+  Comparison -> Lesser
+  Comparison -> GreaterEqual
+  Comparison -> LesserEqual
+
+  Logical -> Or
+  Logical -> And
+  Logical -> Not
+
+  Add -> + RestBinary
+  Subtract -> - RestBinary
+  Multiply -> * RestBinary
+  Divide -> / RestBinary
+  
+  Equals -> = RestBinary
+  NotEqual -> != RestBinary
+  Greater -> > RestBinary
+  Lesser -> < RestBinary
+  GreaterEqual -> >= RestBinary
+  LesserEqual -> <= RestBinary
+
+  Or -> || RestBinary
+  And -> && RestBinary
+  Not -> ! RestUnary
+
+  RestBinary -> Expression Expression )
+  RestUnary -> Expression )
 
   Atom -> String
   Atom -> Integer
   Atom -> Identifier
-
-  List -> ( ListHead RestList
+  Atom -> Boolean
   
-  ListHead -> Reserved
-  ListHead -> Operator
-  ListHead -> Identifier
+  
+  HeadList -> Identifier
+  HeadList -> List
 
   RestList -> Expression RestList
   RestList -> )
 
-  Comment -> ; RestComment
-  RestComment -> Ascii RestComment
-  RestComment -> EOL
+  If -> IF Expression Expression )
+  IfElse -> IFELSE Expression Expression Expression )
+
+  DoList -> DO RestList
+
+  For -> FOR Identifier Expression Expression Expression RestList
+  While -> WHILE Expression RestList
+
+  Params -> PARAMS RestParamsList
+  RestParams -> Identifier RestParams
+  RestParams -> )
+
+  Def -> DEF Identifier Params RestList
+  Set -> SET Identifier Expression )
+
+  Vector -> VECTOR RestList
+  VecGet -> VECGET Identifier Expression )
+  VecSet -> VECSET Identifier Expression Expression )
+
+  Label -> # Identifier Expression )
+  GoTo -> GOTO Identifier )
+  IfGoTo -> IFGOTO Expression Identifier )
+
+  Print -> PRINT Expression )
+  Read -> READ String )
+
 </syntax>
 
 <lexicon>
@@ -29,10 +109,18 @@
   RestInteger -> Digit RestInteger
   RestInteger -> Empty
 
+  String -> " Ascii RestString
+  RestString -> Ascii RestString
+  RestString -> "
+
   Identifier -> Letter RestIdentifier
   RestIdentifier -> Digit RestIdentifier
   RestIdentifier -> Letter RestIdentifier
   RestIdentifier -> Empty
+
+  Comment -> ; RestComment
+  RestComment -> Ascii RestComment
+  RestComment -> EOL
 
   Digit -> 0
   Digit -> 1
@@ -131,10 +219,15 @@
   Reserved -> READ
   Reserved -> VECTOR
   Reserved -> VECSET
+  Reserved -> VECGET
   Reserved -> GOTO
   Reserved -> IFGOTO
   Reserved -> FOR
   Reserved -> WHILE
   Reserved -> #
+  Reserved -> Boolean
+
+  Boolean -> TRUE
+  Boolean -> FALSE
 
 </lexicon>

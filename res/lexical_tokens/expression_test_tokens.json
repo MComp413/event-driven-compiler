@@ -1,0 +1,1 @@
+[{"type":"symbol","content":"("},{"type":"reserved","content":"PRINT"},{"type":"string","content":"\"bom dia\""},{"type":"integer","content":"35"},{"type":"identifier","content":" var"},{"type":"symbol","content":")"},{"type":"symbol","content":"("},{"type":"reserved","content":"READ"},{"type":"string","content":"\"boa noite\""},{"type":"symbol","content":")"}]

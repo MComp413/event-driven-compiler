@@ -34,9 +34,10 @@
   [token-content]
   (contains? multi-char-operator-set token-content))
 
-(def reserved-word-set #{"DO" "DEF" "PARAMS" "SET" "IF" "IFELSE" "LOOP" "RECUR"
-                         "BREAK" "PRINT" "READ" "VECTOR" "VECSET" "GOTO" "IFGOTO"
-                         "FOR" "WHILE" "#"})
+(def reserved-word-set #{"DO" "DEF" "PARAMS" "SET" "IF" "IFELSE"
+                         "PRINT" "READ" "VECTOR" "VECSET" "VECGET"
+                         "GOTO" "IFGOTO" "FOR" "WHILE" "TRUE" "FALSE"
+                         "#"})
 (defn is-reserved-word?
   [token-content]
   (contains? reserved-word-set token-content))
@@ -73,7 +74,6 @@
 
 
 ; Autômato de tokens léxicos
-; token-builder-states #{:empty :word :number :special}
 (def token-builder-transitions
   {:empty (fn [stack event]
             (let [next-char (-> event :data)
@@ -91,7 +91,7 @@
                                              [])
                 :whitespace
                 (stk-atm/new-automaton-state :empty
-                                             stack
+                                             ""
                                              token-builder-transitions
                                              [])
                 :special-char
@@ -195,8 +195,8 @@
                                                               (new-token :integer stack))])
                  :whitespace
                  (stk-atm/new-automaton-state :empty
-                                              (str next-char)
                                               ""
+                                              token-builder-transitions
                                               [(ngn/new-event :token
                                                               (+ 1 (-> event :timestamp))
                                                               (new-token :integer stack))])

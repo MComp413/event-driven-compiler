@@ -90,7 +90,7 @@
 (# loop (IFGOTO (>= x 5) exit))
 (PRINT x)
 (SET x (+ x 1))
-(GOTO)
+(GOTO loop)
 
 (# exit (PRINT "Fim"))
 
