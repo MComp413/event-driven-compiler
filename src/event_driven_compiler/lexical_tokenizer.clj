@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [event-driven-compiler.event-engine :as ngn]
             [event-driven-compiler.event-queue :as q]
-            [event-driven-compiler.stack-automata :as stk-atm]))
+            [event-driven-compiler.stack-automata :as stk-atm]
+            [event-driven-compiler.debugger :as dbg]))
 
 ; Definição de tokens e símbolos/palavras da linguagem
 (def token-types #{:reserved
@@ -351,7 +352,7 @@
 
 (defn lexical-event-handler-selector
   [event]
-  (println event)
+  (dbg/dbg-println event)
   (lexical-event-handlers (-> event :type)))
 
 (def lexical-engine

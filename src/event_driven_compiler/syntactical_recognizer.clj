@@ -1,7 +1,7 @@
 (ns event-driven-compiler.syntactical-recognizer
   (:gen-class)
   (:require [event-driven-compiler.event-queue :as q]
-            [clojure.data.json :as json]))
+            [event-driven-compiler.debugger :as dbg]))
 
 ; Estado do motor sintático
 (def syntactical-queue (q/build-queue))
@@ -17,11 +17,11 @@
 ; - estratégia descendente
 
 (defn log-current-token [caller-string]
-  (println (str caller-string
-                " - Type: "
-                (-> (get-current-token) :type)
-                " Content: "
-                (-> (get-current-token) :content))))
+  (dbg/dbg-println (str caller-string
+                        " - Type: "
+                        (-> (get-current-token) :type)
+                        " Content: "
+                        (-> (get-current-token) :content))))
 
 (defn match-terminal
   [& {:keys [type content caller] :or {type nil, content nil, caller ""}}]
@@ -388,23 +388,3 @@
 (defn run-syntactical-engine [lexical-token-queue]
   (init-syntactical-engine lexical-token-queue)
   (slip-program))
-
-; Definições auxiliares
-;; (def grammar {:expr ["(" "PRINT" :var ")"]
-;;               :var ["x"]})
-
-
-
-; Gerenciadores de evento sintático
-;; (def syntactical-event-handlers
-;;   {:token (fn [event] nil)})
-
-;; (defn syntactical-queue-handler-selector
-;;   [event]
-;;   (println event)
-;;   (syntactical-event-handlers (-> event :type)))
-
-;; (def syntactical-engine (ngn/build-engine
-;;                          syntactical-queue
-;;                          syntactical-queue-handler-selector
-;;                          "syntactical-engine"))

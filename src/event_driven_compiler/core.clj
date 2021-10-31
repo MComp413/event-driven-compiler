@@ -3,6 +3,7 @@
   (:require [event-driven-compiler.event-engine :as ngn]
             [event-driven-compiler.lexical-tokenizer :as lx-ngn]
             [event-driven-compiler.syntactical-recognizer :as stx-ngn]
+            [event-driven-compiler.debugger :as dbg]
             [clojure.data.json :as json]))
 
 (defn is-lexical-state-successful
@@ -12,6 +13,11 @@
         event-queue @((lx-ngn/lexical-engine :queue) :ref)]
     (and (empty? stack) (not= state :error) (empty? event-queue))))
 
+(defn is-syntactical-state-successful
+  []
+  (let [event-queue @(stx-ngn/syntactical-queue :ref)]
+    (empty? event-queue)))
+
 (defn token-map-to-token [token-map]
   (lx-ngn/new-token (keyword (token-map :type)) (token-map :content)))
 
@@ -19,8 +25,10 @@
   [filename]
   (let [tokens-json (slurp filename)
         token-maps (json/read-json tokens-json)
-        tokens (map token-map-to-token token-maps)]
-    (println (str "Arquivo sintaticamente aceito: " (stx-ngn/run-syntactical-engine tokens)))))
+        tokens (map token-map-to-token token-maps)
+        result (stx-ngn/run-syntactical-engine tokens)]
+    (dbg/dbg-println (str "Remaining events: " @(stx-ngn/syntactical-queue :ref)))
+    (println (str "Syntactically acceptable file: " result))))
 
 (defn do-lexical-recognition
   [filename output-filename]
@@ -30,15 +38,38 @@
   (spit output-filename
         (json/write-str @lx-ngn/output-tokens)
         :append true)
-  (println (str "remaning stack: " (-> @lx-ngn/token-builder-automata :stack)))
-  (println (str "remaining events: " @((lx-ngn/lexical-engine :queue) :ref)))
-  (println (str "Arquivo lexicamente aceito: " (is-lexical-state-successful))))
+  (dbg/dbg-println (str "Remaning stack: " (-> @lx-ngn/token-builder-automata :stack)))
+  (dbg/dbg-println (str "Remaining events: " @((lx-ngn/lexical-engine :queue) :ref)))
+  (println (str "Lexically acceptable file: " (is-lexical-state-successful))))
+
+(defn do-full-recognition
+  [filename]
+  (((lx-ngn/lexical-engine :queue) :push) (ngn/new-event :start 0 filename))
+  ((lx-ngn/lexical-engine :run))
+  (println (str "Lexically acceptable file: " (is-lexical-state-successful)))
+  (let [result (stx-ngn/run-syntactical-engine @lx-ngn/output-tokens)]
+    (dbg/dbg-println (str "Remaining events: " @(stx-ngn/syntactical-queue :ref)))
+    (println (str "Syntactically acceptable file: " (and result (is-syntactical-state-successful))))))
+
+(defn get-flag-value [args-list flag]
+  (let [flag-index (.indexOf args-list flag)]
+    (when (and (>= flag-index 0) (< (+ 1 flag-index) (count args-list)))
+      (args-list (+ 1 flag-index)))))
 
 (defn -main
-  [routine filename & [output-filename & _]]
-  (case routine
-    "syntax"
-    (do-syntactical-recognition filename)
+  [routine filename & others]
+  (let [args (into [] others)]
+    (when (.contains args "debug")
+      (dosync (alter dbg/debug (constantly true))))
+    (case routine
+      "full"
+      (do-full-recognition filename)
 
-    "lexicon"
-    (do-lexical-recognition filename output-filename)))
+      "syntax"
+      (do-syntactical-recognition filename)
+
+      "lexicon"
+      (let [output-filename (get-flag-value args "-o")]
+        (if (not= nil output-filename)
+          (do-lexical-recognition filename output-filename)
+          (println "Forneca um endereco para o output na forma '-o <arquivo>.json'"))))))
