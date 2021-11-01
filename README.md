@@ -6,7 +6,7 @@ Recenhecedor de linguagem SLIP desenvolvida para a disciplina PCS-3866 - Linguag
 
 Os arquivos [slip.wirth](./res/lang/slip.wirth) e [slip.llk](./res/lang/slip.llk) contém as definições da linguagem em notação de Wirth e em forma LLK, respectivamente.
 
-## Usage
+## Uso
 
 O [executável standalone](./target/SLIP-0.1.0.jar) pode ser executado via linha de comando, seguindo as seguintes formas:
 
@@ -33,6 +33,14 @@ SLIP-0.1.0.jar full <arquivo de entrada.json> [debug]
 ```
 
 A flag `debug` faz com que o programa imprima no console oas saídas dos motores léxico e sintático.
+
+## Res
+
+O diretório [res](./res) guarda:
+
+- as definições da linguagem em [lang](./res/lang)
+- arquivos de saída do token léxico em [lexical_tokens](./res/lexical_tokens)
+- arquivos fonte para teste em [program](./res/program)
 
 ## License
 
