@@ -14,7 +14,7 @@
   vecget = "(" "VECGET" identifier expression ")" .
   vecset = "(" "VECSET" identifier expression expression ")" .
   while = "(" "WHILE" expression { expression } ")" .
-  for = "(" "FOR" ")" .
+  for = "(" "FOR" identifier expression expression expression { expression } ")" .
   label = "(" "#" identifier expression ")" .
   goto = "(" "GOTO" identifier ")" .
   ifgoto = "(" "IFGOTO" expression identifer ")" .
