@@ -7,7 +7,7 @@
   (Event. type timestamp data))
 
 (defn build-engine
-  [queue event-handler-selector name]
+  [queue event-handler-selector & _]
   {:queue queue
    :run (fn []
           (loop [continue? true]
