@@ -32,15 +32,15 @@ A flag `debug` faz com que o programa imprima no console os tokens consumidos co
 SLIP-0.1.0.jar full <arquivo de entrada.json> [debug]
 ```
 
-A flag `debug` faz com que o programa imprima no console oas saídas dos motores léxico e sintático.
+A flag `debug` faz com que o programa imprima no console as saídas dos motores léxico e sintático.
 
 ## Res
 
 O diretório [res](./res) guarda:
 
-- as definições da linguagem em [lang](./res/lang)
-- arquivos de saída do token léxico em [lexical_tokens](./res/lexical_tokens)
-- arquivos fonte para teste em [program](./res/program)
+- As definições da linguagem em [lang](./res/lang)
+- Arquivos de saída do token léxico em [lexical_tokens](./res/lexical_tokens)
+- Arquivos fonte para teste em [program](./res/program)
 
 ## License
 

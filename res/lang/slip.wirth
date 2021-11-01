@@ -2,7 +2,7 @@
   program = expression { expression } .
   expression = atom | reservedExpression | binaryOperation | unaryOperation | list .
   list = "(" ( identifier | expression ) { expression } ")" .
-  atom = number | identifer | string | operator .
+  atom = number | identifier | string | operator .
 
   if = "(" "IF"  expression expression ")" .
   ifElse = "(" "IFELSE"  expression expression expression ")" .
@@ -17,7 +17,7 @@
   for = "(" "FOR" identifier expression expression expression { expression } ")" .
   label = "(" "#" identifier expression ")" .
   goto = "(" "GOTO" identifier ")" .
-  ifgoto = "(" "IFGOTO" expression identifer ")" .
+  ifgoto = "(" "IFGOTO" expression identifier ")" .
   print = "(" "PRINT" expression ")" .
   read = "(" "READ" ")" .
 
