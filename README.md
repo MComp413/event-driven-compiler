@@ -13,7 +13,7 @@ O [executável standalone](./compiler/SLIP-0.1.0.jar) pode ser executado via lin
 ### Tokenização léxica a partir de arquivo fonte com escrita de tokens em arquivo json:
 
 ```
-SLIP-0.1.0.jar lexicon <arquivo de entrada> -o <arquivo de saída.json> [debug]
+java -jar SLIP-0.1.0.jar lexicon <arquivo de entrada> -o <arquivo de saída.json> [debug]
 ```
 
 A flag `debug` faz com que o programa imprima no console a série de eventos léxicos consumidos pelo motor de eventos.
@@ -21,7 +21,7 @@ A flag `debug` faz com que o programa imprima no console a série de eventos lé
 ### Reconhecimento sintático a partir de tokens em farquivo json:
 
 ```
-SLIP-0.1.0.jar syntax <arquivo de entrada.json> [debug]
+java -jar SLIP-0.1.0.jar syntax <arquivo de entrada.json> [debug]
 ```
 
 A flag `debug` faz com que o programa imprima no console os tokens consumidos com sucesso pelo reconhecedor sintático.
@@ -29,10 +29,14 @@ A flag `debug` faz com que o programa imprima no console os tokens consumidos co
 ### Reconhecimento sintático a partir de arquivo fonte
 
 ```
-SLIP-0.1.0.jar full <arquivo de entrada.json> [debug]
+java -jar SLIP-0.1.0.jar full <arquivo de entrada.json> [debug]
 ```
 
 A flag `debug` faz com que o programa imprima no console as saídas dos motores léxico e sintático.
+
+> Observação: é possível executar o arquivo `.jar` sozinho, via linha de comando, mas não se verá a saída no console.
+> É necessário, portanto, ter o ambiente de execução java instalado na máquina, e a possibilidade de referenciá-lo via
+> linha de comando (isto é, é necessário adicioná-lo ao PATH do sistema).
 
 ## Res
 
