@@ -8,7 +8,7 @@ Os arquivos [slip.wirth](./res/lang/slip.wirth) e [slip.llk](./res/lang/slip.llk
 
 ## Uso
 
-O [executável standalone](./target/SLIP-0.1.0.jar) pode ser executado via linha de comando, seguindo as seguintes formas:
+O [executável standalone](./compiler/SLIP-0.1.0.jar) pode ser executado via linha de comando, seguindo as seguintes formas:
 
 ### Tokenização léxica a partir de arquivo fonte com escrita de tokens em arquivo json:
 
