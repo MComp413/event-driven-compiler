@@ -1,8 +1,35 @@
 <syntax>
   program = expression { expression } .
-  expression = atom | list .
-  list = "(" { expression } ")" .
+  expression = atom | reservedExpression | binaryOperation | unaryOperation | list .
+  list = "(" ( identifier | expression ) { expression } ")" .
   atom = number | identifer | string | operator .
+
+  if = "(" "IF"  expression expression ")" .
+  ifElse = "(" "IFELSE"  expression expression expression ")" .
+  doExpr = "(" "DO" { expression } ")" .
+  def = "(" "DEF" identifier params  { expression } ")" .
+  params = "(" "PARAMS" { identifier } ")" .
+  set = "(" "SET" identifier expression ")" .
+  vector = "(" "VECTOR" { expression } ")" .
+  vecget = "(" "VECGET" identifier expression ")" .
+  vecset = "(" "VECSET" identifier expression expression ")" .
+  while = "(" "WHILE" expression { expression } ")" .
+  for = "(" "FOR" ")" .
+  label = "(" "#" identifier expression ")" .
+  goto = "(" "GOTO" identifier ")" .
+  ifgoto = "(" "IFGOTO" expression identifer ")" .
+  print = "(" "PRINT" expression ")" .
+  read = "(" "READ" ")" .
+
+  binaryOperation = "(" binaryOperator expression expression ")" .
+  unaryOperation = = "(" unaryOperator expression ")" .
+
+  binaryOperator = "+" | "-" | "*" | "/" 
+                       | "&&" | "||" | "=" 
+                       | "!=" | ">" | "<" | ">=" 
+                       | "<=" .
+  
+  unaryOperator = "!" .
 
   number = digit { digit } .
   identifier = name | reserved .
@@ -34,7 +61,7 @@
                  | "<=" .
              
   reserved = "DO" | "DEF" | "PARAMS" | "SET" | "IF"
-                  | "IFELSE" | "LOOP" | "RECUR" | "BREAK"
-                  | "PRINT" | "READ" | "VECTOR" | "VECSET"
-                  | "GOTO" | "IFGOTO" | "FOR" | "WHILE" | "#" .
+                  | "IFELSE" | "PRINT" | "READ" | "VECTOR"
+                  | "VECSET" | "VECGET" | "GOTO" | "IFGOTO"
+                  | "FOR" | "WHILE" | "#" .
 </lexicon>

@@ -212,9 +212,6 @@
   Reserved -> SET
   Reserved -> IF
   Reserved -> IFELSE
-  Reserved -> LOOP
-  Reserved -> RECUR
-  Reserved -> BREAK
   Reserved -> PRINT
   Reserved -> READ
   Reserved -> VECTOR
