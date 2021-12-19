@@ -135,7 +135,18 @@
 
 (defn slip-vector []
   (if (match-terminal :content "VECTOR" :caller "slip-vector")
-    (slip-rest-list)
+    (if (match-terminal :type :identifier :caller "slip-vector")
+      (if (match-terminal :type :integer :caller "slip-vector")
+        (match-terminal :content ")" :caller "slip-vector")
+        false)
+      false)
+    false))
+
+(defn slip-len []
+  (if (match-terminal :content "LEN" :caller "slip-len")
+    (if (match-terminal :type :identifier :caller "slip-len")
+      (match-terminal :content ")" :caller "slip-len")
+      false)
     false))
 
 (defn slip-vec-get []
@@ -192,9 +203,7 @@
 
 (defn slip-read []
   (if (match-terminal :content "READ" :caller "slip-read")
-    (if (match-terminal :type :string :caller "slip-read")
-      (match-terminal :content ")" :caller "slip-read")
-      false)
+    (match-terminal :content ")" :caller "slip-read")
     false))
 
 (defn slip-keyword-call []
@@ -216,19 +225,21 @@
                   true
                   (if (slip-vector)
                     true
-                    (if (slip-vec-get)
+                    (if (slip-len)
                       true
-                      (if (slip-vec-set)
+                      (if (slip-vec-get)
                         true
-                        (if (slip-label)
+                        (if (slip-vec-set)
                           true
-                          (if (slip-go-to)
+                          (if (slip-label)
                             true
-                            (if (slip-if-go-to)
+                            (if (slip-go-to)
                               true
-                              (if (slip-print)
+                              (if (slip-if-go-to)
                                 true
-                                (slip-read)))))))))))))))))
+                                (if (slip-print)
+                                  true
+                                  (slip-read))))))))))))))))))
 
 ; Caudas de lista com dois e um elementos
 
@@ -262,6 +273,10 @@
   (if (match-terminal :content "/" :caller "slip-divide")
     (rest-binary)
     false))
+(defn slip-remainder []
+  (if (match-terminal :content "%" :caller "slip-remainder")
+    (rest-binary)
+    false))
 
 (defn slip-arithmetic []
   (if (slip-add)
@@ -270,7 +285,9 @@
       true
       (if (slip-multiply)
         true
-        (slip-divide)))))
+        (if (slip-divide)
+          true
+          (slip-remainder))))))
 
 ; Comparação
 

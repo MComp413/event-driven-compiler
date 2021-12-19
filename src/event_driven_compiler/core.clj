@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [event-driven-compiler.event-engine :as ngn]
             [event-driven-compiler.lexical-tokenizer :as lx-ngn]
-            [event-driven-compiler.syntactical-recognizer :as stx-ngn]
+            [event-driven-compiler.syntactical-node-tree :as stx-ngn]
             [event-driven-compiler.debugger :as dbg]
             [clojure.data.json :as json]))
 
