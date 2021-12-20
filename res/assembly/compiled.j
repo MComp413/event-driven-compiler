@@ -155,23 +155,36 @@ invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
 return
 .end method
 
+.method public static fibo(I)I
+.limit stack 11
+.limit locals 11
+IFELSE_0:
+iload 0
+ldc 1
+invokestatic Ccompiled/lseq(II)I
+ifeq IFELSE_0_ELSE
+ldc 1
+goto IFELSE_0_END
+IFELSE_0_ELSE:
+iload 0
+ldc 1
+isub
+invokestatic Ccompiled/fibo(I)I
+iload 0
+ldc 2
+isub
+invokestatic Ccompiled/fibo(I)I
+iadd
+IFELSE_0_END:
+ireturn
+.end method
+
 .method public static main([Ljava/lang/String;)V
 .limit stack 9
 .limit locals 9
 
 invokestatic Ccompiled/read()I
-istore 1
-ldc 3
-ldc 2
-iload 1
-imul
-iadd
-istore 2
-iload 2
-iload 2
-iload 1
-idiv
-isub
+invokestatic Ccompiled/fibo(I)I
 invokestatic Ccompiled/print(I)V
 return
 .end method

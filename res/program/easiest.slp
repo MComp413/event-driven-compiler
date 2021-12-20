@@ -1,4 +1,6 @@
-(SET len (READ))
-(VECTOR vetor len)
-(FOR i 0 1 len (SETVEC vetor i (READ)))
-(FOR i 0 1 len (PRINT (GETVEC vetor i)))
+(DEF fibo (PARAMS n)
+  (IFELSE (<= n 1)
+    1
+    (+ (fibo (- n 1)) (fibo (- n 2)))))
+
+(PRINT (fibo (READ)))

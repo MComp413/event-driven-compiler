@@ -66,7 +66,7 @@
    :second-operand-synt second-operand-synt})
 
 ;; expr block synt
-(defn do-synt [& expr-synts]
+(defn do-synt [expr-synts]
   {:type :DO
    :expr-synts expr-synts})
 

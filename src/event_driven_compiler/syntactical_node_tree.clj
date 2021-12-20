@@ -232,8 +232,8 @@
 (defn slip-vector []
   (if (match-terminal :content "VECTOR" :caller "slip-vector")
     (let [name-synt (match-terminal :type :identifier :caller "slip-vector")]
-      (cond name-synt (write-var-name name-synt))
-      (let [length-synt (if name-synt (match-terminal :type :integer :caller "slip-vector") nil)]
+      (cond name-synt (write-var-name (:content name-synt)))
+      (let [length-synt (if name-synt (slip-expression) nil)]
         (if length-synt
           (if (match-terminal :content ")" :caller "slip-vector")
             (aux-print (synt/vector-synt name-synt length-synt))

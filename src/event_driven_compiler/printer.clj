@@ -89,6 +89,19 @@
 ;;(def function-var-pools (ref {}))
 ;;(def function-reg-counters (ref {}))
 
+;; function context
+(def printer-context (ref "main"))
+(defn set-printer-context [new-context]
+  (dosync (alter printer-context (constantly new-context))))
+(defn get-var-pool []
+  (if (= @printer-context "main")
+    @syntree/main-var-pool
+    (@syntree/function-var-pools @printer-context)))
+
+(def compiled-functions (ref ""))
+(defn write-function [compiled-func]
+  (dosync (alter compiled-functions str compiled-func)))
+
 (declare comp-synt)
 
 ;; program root synt
@@ -142,7 +155,7 @@
 (defn comp-for-synt [synt]
   (let [idx (@occurrence-counters :FOR)
         var-name (:content (:identif-synt synt))
-        var-reg (@syntree/main-var-pool var-name)]
+        var-reg ((get-var-pool) var-name)]
     (increment-counter :FOR)
     (str "FOR_" idx ":\n"
          (comp-synt (:start-synt synt))
@@ -162,18 +175,25 @@
          "FOR_" idx "_BREAK:\n")))
 
 ;; function synts
-(defn func-synt [name-synt params-synt body-synt]
-  {:type :DEF
-   :name-synt name-synt
-   :params-synt params-synt
-   :body-synt body-synt})
-(defn call-synt [name-synt args-synts]
-  {:type :CALL
-   :name-synt name-synt
-   :args-synts args-synts})
-(defn params-synt [identifiers-synts]
-  {:type :PARAMS
-   :identifiers-synts identifiers-synts})
+(defn comp-func-synt [synt]
+  (let [func-name (:content (:name-synt synt))]
+    (set-printer-context func-name)
+    (let [regs-count (@syntree/function-reg-counters func-name)
+          func-header (str ".method public static " func-name "(" (apply str (repeat (@syntree/function-header-pool func-name) "I")) ")I\n")
+          func-limits (str ".limit stack " (+ 10 regs-count) "\n.limit locals " (+ 10 regs-count) "\n")
+          func-tail (str "ireturn\n.end method\n\n")]
+      (write-function (str func-header
+                           func-limits
+                           (reduce str (map comp-synt (:body-synt synt)))
+                           func-tail))
+      (set-printer-context "main")
+      "")))
+
+(defn comp-call-synt [synt]
+  (let [func-name (:content (:name-synt synt))
+        func-call (str "invokestatic " @classname "/" func-name "(" (apply str (repeat (@syntree/function-header-pool func-name) "I")) ")I\n")]
+    (str (reduce str (map comp-synt (:args-synts synt)))
+         func-call)))
 
 ;; arithmetic synts
 (defn arithm-operator-to-asm [operator]
@@ -191,9 +211,9 @@
 ;; logic synts
 (defn logic-operator-to-asm [operator]
   (case operator
-    "&&" (str "invokestatic" @classname "/and(II)I")
-    "||" (str "invokestatic" @classname "/or(II)I")
-    "!" (str "invokestatic" @classname "/not(I)I")))
+    "&&" (str "invokestatic " @classname "/and(II)I\n")
+    "||" (str "invokestatic " @classname "/or(II)I\n")
+    "!" (str "invokestatic " @classname "/not(I)I\n")))
 
 (defn comp-binary-logic-synt [synt]
   (str (comp-synt (:first-operand-synt synt))
@@ -206,12 +226,12 @@
 ;; comparison synts
 (defn comparison-operator-to-asm [operator]
   (case operator
-    "=" "invokestatic" @classname "/equals(II)I"
-    "!=" "invokestatic" @classname "/diff(II)I"
-    ">" "invokestatic" @classname "/grt(II)I"
-    "<" "invokestatic" @classname "/les(II)I"
-    ">=" "invokestatic" @classname "/greq(II)I"
-    "<=")) "invokestatic" @classname "/lseq(II)I"
+    "=" (str "invokestatic " @classname "/equals(II)I\n")
+    "!=" (str "invokestatic " @classname "/diff(II)I\n")
+    ">" (str "invokestatic " @classname "/grt(II)I\n")
+    "<" (str "invokestatic " @classname "/les(II)I\n")
+    ">=" (str "invokestatic " @classname "/greq(II)I\n")
+    "<=" (str "invokestatic " @classname "/lseq(II)I\n")))
 (defn comp-comparison-synt [synt]
   (str (comp-synt (:first-operand-synt synt))
        (comp-synt (:second-operand-synt synt))
@@ -223,11 +243,11 @@
 
 ;; vars synts
 (defn comp-set-synt [synt]
-  (let [var-reg (@syntree/main-var-pool (:content (:identif-synt synt)))]
+  (let [var-reg ((get-var-pool) (:content (:identif-synt synt)))]
     (str (comp-synt (:value-synt synt))
          "istore " var-reg "\n")))
 (defn comp-var-synt [synt]
-  (str "iload " (@syntree/main-var-pool (:content synt)) "\n"))
+  (str "iload " ((get-var-pool) (:content synt)) "\n"))
 
 ;; IO synts
 (defn comp-print-synt [synt]
@@ -237,22 +257,26 @@
   (str "invokestatic " @classname "/read()I\n"))
 
 ;; vector synts
-(defn vector-synt [name-synt length-synt]
-  {:type :VECTOR
-   :name-synt name-synt
-   :length-synt length-synt})
-(defn vec-get-synt [name-synt index-synt]
-  {:type :VECGET
-   :name-synt name-synt
-   :index-synt index-synt})
-(defn vec-set-synt [name-synt index-synt value-synt]
-  {:type :VECSET
-   :name-synt name-synt
-   :index-synt index-synt
-   :value-synt value-synt})
-(defn len-synt [name-synt]
-  {:type :LEN
-   :name-synt name-synt})
+(defn comp-vector-synt [synt]
+  (let [vec-reg ((get-var-pool) (:content (:name-synt synt)))]
+    (str (comp-synt (:length-synt synt))
+         "newarray int\n"
+         "astore " vec-reg "\n")))
+(defn comp-vecget-synt [synt]
+  (let [vec-reg ((get-var-pool) (:content (:name-synt synt)))]
+    (str "aload " vec-reg "\n"
+         (comp-synt (:index-synt synt))
+         "iaload\n")))
+(defn comp-vecset-synt [synt]
+  (let [vec-reg ((get-var-pool) (:content (:name-synt synt)))]
+    (str "aload " vec-reg "\n"
+         (comp-synt (:index-synt synt))
+         (comp-synt (:value-synt synt))
+         "iastore\n")))
+(defn comp-len-synt [synt]
+  (let [vec-reg ((get-var-pool) (:content (:name-synt synt)))]
+    (str "aload " vec-reg "\n"
+         "arraylength\n")))
 
 ;; labels synts
 (defn label-synt [name-synt expr-synt]
@@ -278,11 +302,18 @@
     :PRINT (comp-print-synt synt)
     :READ (comp-read-synt synt)
     :FOR (comp-for-synt synt)
+    :WHILE (comp-while-synt synt)
     :SET (comp-set-synt synt)
     :DO (comp-do-synt synt)
     :BIN-LOGIC (comp-binary-logic-synt synt)
     :UN-LOGIC (comp-unary-logic-synt synt)
     :COMP (comp-comparison-synt synt)
+    :VECTOR (comp-vector-synt synt)
+    :VECGET (comp-vecget-synt synt)
+    :VECSET (comp-vecset-synt synt)
+    :LEN (comp-len-synt synt)
+    :DEF (comp-func-synt synt)
+    :CALL (comp-call-synt synt)
     :identifier (comp-var-synt synt)
     :integer (comp-atom-synt synt)
     :string (comp-atom-synt synt)
@@ -293,5 +324,5 @@
   (println (str "árvore sintática: " program-synt-tree))
   (let [preamble (full-preamble filename)
         main-target (comp-synt program-synt-tree)]
-    (str preamble main-target)))
+    (str preamble @compiled-functions main-target)))
 
