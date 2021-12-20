@@ -1,6 +1,10 @@
 (ns event-driven-compiler.syntactical-node
   (:gen-class))
 
+;; program root synt
+(defn prog-synt [expr-synts]
+  {:type :PROGRAM :expr-synts expr-synts})
+
 ;; atom synt
 (defn atom-synt [type content]
   {:type type :content content})

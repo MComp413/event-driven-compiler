@@ -7,9 +7,63 @@
 
 ;; nós de programa principal e métodos
 
+(def context-key (ref "main"))
+
 (def main-var-pool (ref {}))
-(def function-var-pool (ref {}))
+(def main-reg-counter (ref {}))
+
 (def function-header-pool (ref {}))
+(def function-var-pools (ref {}))
+(def function-reg-counters (ref {}))
+
+(defn clear-context-tables []
+  (dosync (alter main-var-pool (constantly {}))
+          (alter main-reg-counter (constantly 0))
+          (alter function-header-pool (constantly {}))
+          (alter function-var-pools (constantly {}))
+          (alter function-reg-counters (constantly {}))
+          (alter context-key (constantly "main"))))
+
+(defn write-var-name [var-name]
+  (if (= @context-key "main")
+    (dosync (alter main-var-pool (fn [pool] (if (contains? pool var-name)
+                                              pool
+                                              (do (alter main-reg-counter + 1)
+                                                  (into pool {var-name @main-reg-counter}))))))
+    (dosync (alter function-var-pools (fn [var-pools]
+                                        (if (contains? (var-pools @context-key) var-name)
+                                          var-pools
+                                          (let [new-var-pools (into var-pools
+                                                                    {@context-key
+                                                                     (into (var-pools @context-key)
+                                                                           {var-name
+                                                                            (@function-reg-counters @context-key)})})]
+                                            (alter function-reg-counters (fn [reg-counters] (into reg-counters {@context-key (+ 1 (reg-counters @context-key))})))
+                                            new-var-pools)))))))
+
+(defn write-param-name [param-name]
+  (cond (not= @context-key "main")
+        (cond (not (contains? (@function-var-pools @context-key) param-name))
+              (do
+                (dosync (alter function-header-pool (fn [header-pool] (into header-pool {@context-key (+ 1 (header-pool @context-key))}))))
+                (dosync (alter function-var-pools (fn [var-pools] (into var-pools {@context-key (into (var-pools @context-key) {param-name (@function-reg-counters @context-key)})}))))
+                (dosync (alter function-reg-counters (fn [reg-counters] (into reg-counters {@context-key (+ 1 (reg-counters @context-key))}))))))))
+
+(defn set-context [context-name]
+  (cond (not= context-name "main")
+        (dosync (alter function-header-pool (fn [header-pool] (if (contains? header-pool context-name)
+                                                                header-pool
+                                                                (into header-pool {context-name 0}))))
+                (alter function-var-pools (fn [func-pools]
+                                            (if (contains? func-pools context-name)
+                                              func-pools
+                                              (into func-pools {context-name {}}))))
+                (alter function-reg-counters (fn [reg-counters]
+                                               (if (contains? reg-counters context-name)
+                                                 reg-counters
+                                                 (into reg-counters {context-name 0}))))))
+  (dosync (alter context-key (constantly context-name))))
+
 
 
 ; Estado do motor sintático
@@ -39,7 +93,6 @@
       (not= content nil)
       (if (= content (-> current-token :content))
         (do
-          (log-current-token caller)
           (get-next-token)
           (synt/atom-synt (-> current-token :type) (-> current-token :content)))
         nil)
@@ -47,7 +100,6 @@
       (not= type nil)
       (if (= type (-> current-token :type))
         (do
-          (log-current-token caller)
           (get-next-token)
           (synt/atom-synt (-> current-token :type) (-> current-token :content)))
         nil)
@@ -69,7 +121,7 @@
 
 ; Comandos de palavra reservada
 
-(defn aux-print [val] (println val) val)
+(defn aux-print [val] (dbg/dbg-println val) val)
 
 (defn slip-if []
   (if (match-terminal :content "IF" :caller "slip-if")
@@ -77,7 +129,9 @@
       (if cond-synt
         (let [expr-synt (slip-expression)]
           (if expr-synt
-            (aux-print (synt/if-synt cond-synt expr-synt))
+            (if (match-terminal :content ")" :caller "slip-if-else")
+              (aux-print (synt/if-synt cond-synt expr-synt))
+              nil)
             nil))
         nil))
     nil))
@@ -108,14 +162,15 @@
 
 (defn slip-for []
   (if (match-terminal :content "FOR" :caller "slip-for")
-    (let [identif-synt (match-terminal :type :identifier :caller "slip-for")
-          start-synt (if identif-synt (slip-expression) nil)
-          step-synt (if start-synt (slip-expression) nil)
-          stop-synt (if step-synt (slip-expression) nil)
-          body-synt (if stop-synt (slip-rest-list) nil)]
-      (if body-synt
-        (aux-print (synt/for-synt identif-synt start-synt step-synt stop-synt body-synt))
-        nil))
+    (let [identif-synt (match-terminal :type :identifier :caller "slip-for")]
+      (cond identif-synt (write-var-name (:content identif-synt)))
+      (let [start-synt (if identif-synt (slip-expression) nil)
+            step-synt (if start-synt (slip-expression) nil)
+            stop-synt (if step-synt (slip-expression) nil)
+            body-synt (if stop-synt (slip-rest-list) nil)]
+        (if body-synt
+          (aux-print (synt/for-synt identif-synt start-synt step-synt stop-synt body-synt))
+          nil)))
     nil))
 
 (defn slip-while []
@@ -128,16 +183,16 @@
     nil))
 
 (defn slip-rest-params []
-  (let [param (match-terminal :type :identifier :caller "slip-rest-params")
-        other-params (if param
-                       (slip-rest-params)
-                       (if (match-terminal :content ")" :caller "slip-rest-params")
-                         [] nil))]
-    (if other-params
-      (if param
-        (into [param] other-params)
-        other-params)
-      nil)))
+  (let [param (match-terminal :type :identifier :caller "slip-rest-params")]
+    (cond param (write-param-name (:content param)))
+    (let [other-params (if param
+                         (slip-rest-params)
+                         (if (match-terminal :content ")" :caller "slip-rest-params")
+                           [] nil))] (if other-params
+                                       (if param
+                                         (into [param] other-params)
+                                         other-params)
+                                       nil))))
 
 (defn slip-params []
   (if (match-terminal :content "(" :caller "slip-params")
@@ -152,34 +207,38 @@
 
 (defn slip-def []
   (if (match-terminal :content "DEF" :caller "slip-def")
-    (let [name-synt (match-terminal :type :identifier :caller "slip-def")
-          params-synt (if name-synt (slip-params) nil)
-          body-synt (if params-synt (slip-rest-list) nil)]
-      (if body-synt
-        (aux-print (synt/func-synt name-synt params-synt body-synt))
-        nil))
+    (let [name-synt (match-terminal :type :identifier :caller "slip-def")]
+      (cond name-synt (set-context (:content name-synt)))
+      (let [params-synt (if name-synt (slip-params) nil)
+            body-synt (if params-synt (slip-rest-list) nil)]
+        (if body-synt
+          (do (set-context "main")
+              (aux-print (synt/func-synt name-synt params-synt body-synt)))
+          nil)))
     nil))
 
 (defn slip-set []
   (if (match-terminal :content "SET" :caller "slip-set")
-    (let [identif-synt (match-terminal :type :identifier :caller "slip-set")
-          value-synt (if identif-synt (slip-expression) nil)]
-      (if value-synt
-        (if (match-terminal :content ")" :caller "slip-set")
-          (aux-print (synt/set-synt identif-synt value-synt))
-          nil)
-        nil))
+    (let [identif-synt (match-terminal :type :identifier :caller "slip-set")]
+      (cond identif-synt (write-var-name (:content identif-synt)))
+      (let [value-synt (if identif-synt (slip-expression) nil)]
+        (if value-synt
+          (if (match-terminal :content ")" :caller "slip-set")
+            (aux-print (synt/set-synt identif-synt value-synt))
+            nil)
+          nil)))
     nil))
 
 (defn slip-vector []
   (if (match-terminal :content "VECTOR" :caller "slip-vector")
-    (let [name-synt (match-terminal :type :identifier :caller "slip-vector")
-          length-synt (if name-synt (match-terminal :type :integer :caller "slip-vector") nil)]
-      (if length-synt
-        (if (match-terminal :content ")" :caller "slip-vector")
-          (aux-print (synt/vector-synt name-synt length-synt))
-          nil)
-        nil))
+    (let [name-synt (match-terminal :type :identifier :caller "slip-vector")]
+      (cond name-synt (write-var-name name-synt))
+      (let [length-synt (if name-synt (match-terminal :type :integer :caller "slip-vector") nil)]
+        (if length-synt
+          (if (match-terminal :content ")" :caller "slip-vector")
+            (aux-print (synt/vector-synt name-synt length-synt))
+            nil)
+          nil)))
     nil))
 
 (defn slip-len []
@@ -470,14 +529,23 @@
   (nil? (get-current-token)))
 
 (defn slip-rest-program []
-  (if (slip-expression)
-    (slip-rest-program)
-    (slip-program-end)))
+  (let [expr-synt (slip-expression)
+        other-exprs (if expr-synt
+                      (slip-rest-program)
+                      (if (slip-program-end)
+                        [] nil))]
+    (if other-exprs
+      (if expr-synt
+        (into [expr-synt] other-exprs)
+        other-exprs)
+      nil)))
 
 (defn slip-program []
-  (if (slip-expression)
-    (slip-rest-program)
-    false))
+  (let [first-expr (slip-expression)
+        other-exprs (if first-expr (slip-rest-program) nil)]
+    (if other-exprs
+      (aux-print (synt/prog-synt (into [first-expr] other-exprs)))
+      nil)))
 
 
 ; Motor sintático
@@ -486,4 +554,12 @@
 
 (defn run-syntactical-engine [lexical-token-queue]
   (init-syntactical-engine lexical-token-queue)
-  (slip-program))
+  (clear-context-tables)
+  (let [program-synt (slip-program)]
+    (aux-print (str "final context: " @context-key))
+    (aux-print (str "main variables pool: " @main-var-pool))
+    (aux-print (str "main register counter: " @main-reg-counter))
+    (aux-print (str "function headers pool: " @function-header-pool))
+    (aux-print (str "function variables pools: " @function-var-pools))
+    (aux-print (str "function register counters: " @function-reg-counters))
+    program-synt))

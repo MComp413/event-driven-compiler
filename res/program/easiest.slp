@@ -1,3 +1,4 @@
-(DEF func (PARAMS x y)
-  (SET x (+ x y))
-  x)
+(SET len (READ))
+(VECTOR vetor len)
+(FOR i 0 1 len (SETVEC vetor i (READ)))
+(FOR i 0 1 len (PRINT (GETVEC vetor i)))

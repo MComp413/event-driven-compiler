@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [event-driven-compiler.event-engine :as ngn]
             [event-driven-compiler.lexical-tokenizer :as lx-ngn]
-            [event-driven-compiler.syntactical-node-tree :as stx-ngn]
+            [event-driven-compiler.syntactical-node-tree :as syn-ngn]
+            [event-driven-compiler.printer :as syn-prn]
             [event-driven-compiler.debugger :as dbg]
             [clojure.data.json :as json]))
 
@@ -15,7 +16,7 @@
 
 (defn is-syntactical-state-successful
   []
-  (let [event-queue @(stx-ngn/syntactical-queue :ref)]
+  (let [event-queue @(syn-ngn/syntactical-queue :ref)]
     (empty? event-queue)))
 
 (defn token-map-to-token [token-map]
@@ -26,8 +27,8 @@
   (let [tokens-json (slurp filename)
         token-maps (json/read-json tokens-json)
         tokens (map token-map-to-token token-maps)
-        result (stx-ngn/run-syntactical-engine tokens)]
-    (dbg/dbg-println (str "Remaining events: " @(stx-ngn/syntactical-queue :ref)))
+        result (syn-ngn/run-syntactical-engine tokens)]
+    (dbg/dbg-println (str "Remaining events: " @(syn-ngn/syntactical-queue :ref)))
     (println (str "Syntactically acceptable file: " result))))
 
 (defn do-lexical-recognition
@@ -47,9 +48,11 @@
   (((lx-ngn/lexical-engine :queue) :push) (ngn/new-event :start 0 filename))
   ((lx-ngn/lexical-engine :run))
   (println (str "Lexically acceptable file: " (is-lexical-state-successful)))
-  (let [result (stx-ngn/run-syntactical-engine @lx-ngn/output-tokens)]
-    (dbg/dbg-println (str "Remaining events: " @(stx-ngn/syntactical-queue :ref)))
-    (println (str "Syntactically acceptable file: " (and result (is-syntactical-state-successful))))))
+  (let [result (syn-ngn/run-syntactical-engine @lx-ngn/output-tokens)]
+    (dbg/dbg-println (str "Remaining events: " @(syn-ngn/syntactical-queue :ref)))
+    (println (str "Syntactically acceptable file: " (and result (is-syntactical-state-successful))))
+    (syn-prn/set-classname "compiled")
+    (spit "./res/assembly/compiled.j" (syn-prn/print-full "compiled" result))))
 
 (defn get-flag-value [args-list flag]
   (let [flag-index (.indexOf args-list flag)]
